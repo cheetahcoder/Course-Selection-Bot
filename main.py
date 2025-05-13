@@ -231,7 +231,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 counter = 0
                 for i in usersData:
                     counter += 1
-                    message += ("🔹 " + str(counter) + ". نام: " + i["name"] + " | " + " کد دانشجویی: " + i["studentID"] + " | " + " تلفن: " + i["number"])
+                    message += ("\n🔹 " + str(counter) + ". نام: " + i["name"] + " | " + " کد دانشجویی: " + i["studentID"] + " | " + " تلفن: " + i["number"])
 
                 await update.message.reply_text(message) 
             

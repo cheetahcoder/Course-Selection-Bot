@@ -1,6 +1,13 @@
 from telegram import Update, KeyboardButton,ReplyKeyboardRemove, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler, CallbackContext
 import json
+import csv
+import os
+import matplotlib.pyplot as plt
+from bidi.algorithm import get_display
+import arabic_reshaper
+import random
+
 
 usersData = []
 dataFile = open ("User_Data.json", "r", encoding="utf-8")
@@ -17,6 +24,17 @@ dataFile = open ("Courses.json", "r", encoding="utf-8")
 courses = json.load(dataFile)
 dataFile.close()
 
+
+def fixPersianText(text):
+    reshapedText = arabic_reshaper.reshape(text)
+    return get_display(reshapedText)
+
+def makeColor(x):
+    colors = []
+    for i in range(x):
+        color = (random.random(), random.random(), random.random())
+        colors.append(color)
+    return colors
 
 def saveLastData():
     dataFile = open ("User_Data.json", "w")
@@ -57,13 +75,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     resultCheck = Users.checkUser(userID)
     if resultCheck:
         if userID in admins:
-            buttons = [[KeyboardButton("📚 انتخاب واحد")],[KeyboardButton("📊 گزارش انتخاب دروس"), KeyboardButton("🧑‍🎓 لیست کاربران")],[KeyboardButton("📖 لیست دروس"), KeyboardButton("➕ افزودن درس")]]
+            buttons = [[KeyboardButton("📚 انتخاب واحد")],[KeyboardButton("📊 گزارش انتخاب دروس"), KeyboardButton("🧑‍🎓 لیست کاربران")],[KeyboardButton("📖 لیست دروس"), KeyboardButton("➕ افزودن درس")], [KeyboardButton("📂 اکسل گزارش انتخاب دروس")]]
             reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
             await update.message.reply_text("منوی دسترسی:", reply_markup=reply)
         else:
             button = KeyboardButton("📚 انتخاب واحد")
             reply = ReplyKeyboardMarkup([[button]], resize_keyboard=True)
-            await update.message.reply_text(f"👋 سلام {resultCheck['name']} عزیز!\n🎯 لطفاً گزینه مورد نظر خود را از منوی زیر انتخاب کنید.", reply_markup=reply)
+            await update.message.reply_text(f"👋 سلام {resultCheck["name"]} عزیز!\n🎯 لطفاً گزینه مورد نظر خود را از منوی زیر انتخاب کنید.", reply_markup=reply)
     else:
         await update.message.reply_text(f"👋 سلام {firstName} عزیز!\n🌟 برای ثبت‌نام، لطفاً نام خانوادگی خود را ارسال کنید:")
         context.user_data["level"] = 1
@@ -75,14 +93,14 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("level"):
         if context.user_data["level"] == 1 :
             if message:
-                context.user_data['name'] = message
+                context.user_data["name"] = message
                 context.user_data["level"] = 2
                 await update.message.reply_text("لطفاً کد دانشجویی خود را ارسال کنید.")
             else:
                 await update.message.reply_text("Lotfan Name Khod Ra Vared Konid!")
         elif context.user_data["level"] == 2 :
             if len(message) == 9 and message.isdigit():
-                context.user_data['studentId'] = message
+                context.user_data["studentId"] = message
                 context.user_data["level"] = 3
                 shareButton = KeyboardButton("Share Contact", request_contact=True)
                 reply = ReplyKeyboardMarkup([[shareButton]], resize_keyboard=True)
@@ -92,7 +110,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif context.user_data["level"] == 3 :
             contact = update.message.contact
             if contact:
-                Users.registerUser(userID, context.user_data['name'], context.user_data['studentId'], contact.phone_number)
+                Users.registerUser(userID, context.user_data["name"], context.user_data["studentId"], contact.phone_number)
                 
                 button = KeyboardButton("📚 انتخاب واحد")
                 reply = ReplyKeyboardMarkup([[button]], resize_keyboard=True)
@@ -102,7 +120,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["add"] = False
         courses[message] = []
         saveLastData()
-        await update.message.reply_text(f"درس '{message}' با موفقیت اضافه شد.")
+        await update.message.reply_text(f'درس "{message}" با موفقیت اضافه شد.')
         
     else:
         if Users.checkUser(userID):
@@ -140,8 +158,74 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     for i in v:
                         message += ("     🔸 " + Users.checkUser(i)["name"] + " (کد: " + Users.checkUser(i)["studentID"] + ")\n")
 
-                await update.message.reply_text(message) 
-            
+                await update.message.reply_text(message)                
+
+                for k,v in courses.items():
+                    chartDatax = []
+                    chartDatay = []
+
+                    for i in v:
+                        
+                        if not(Users.checkUser(i)["studentID"][:4] in chartDatax):
+                            chartDatax.append(Users.checkUser(i)["studentID"][:4])
+                            chartDatay.append(1)
+                        else:
+                            indexData = chartDatax.index(Users.checkUser(i)["studentID"][:4])
+                            chartDatay[indexData] += 1
+
+                    colors = makeColor(len(chartDatax))
+                    plt.bar(chartDatax, chartDatay, color=colors)
+                    plt.title(fixPersianText(k))
+                    plt.xlabel(fixPersianText("سال ورود"))
+                    plt.ylabel(fixPersianText("تعداد دانشجو"))
+                    plt.savefig(k + ".jpg")
+                    plt.close()
+
+
+                    f = open(k + ".jpg", "rb")
+                    await update.message.reply_photo(photo=f)
+                    f.close()
+
+                    os.remove(k + ".jpg")
+
+
+            elif message == "📂 اکسل گزارش انتخاب دروس":
+                dataFile = open("stats_report.csv", "w", encoding="utf-8-sig", newline="")
+                writer = csv.writer(dataFile)
+                writer.writerow(["Course Name", "Students Count"])
+
+                for k, v in courses.items():
+                    writer.writerow([k, len(v)])
+
+                dataFile.close()
+
+                f = open("stats_report.csv", "rb")
+                await update.message.reply_document(document=f, filename="stats_report.csv")
+                f.close()
+
+               
+                os.remove("stats_report.csv")
+
+
+                dataFile = open ("selection_report.csv", "w", encoding="utf-8-sig", newline="")
+                writer = csv.writer(dataFile)
+                writer.writerow(["Course Name", "Student Name", "Student ID"])
+                for course, users in courses.items():
+                    if not users:
+                        writer.writerow([course, "", ""])
+                    else:
+                        for i in users:
+                            user = Users.checkUser(i)
+                            writer.writerow([course, user["name"], user["studentID"]])
+
+                dataFile.close()
+
+                f = open("selection_report.csv", "rb")
+                await update.message.reply_document(document=f, filename="selection_report.csv")
+                f.close()
+
+                os.remove("selection_report.csv")
+
             elif message == "🧑‍🎓 لیست کاربران":
                 message = "🧑‍🎓 لیست کاربران:\n\n"
                 counter = 0
@@ -202,10 +286,10 @@ async def courseSelection(update: Update, context: CallbackContext):
 
 
 
-application = ApplicationBuilder().token('TOKEN').build()
+application = ApplicationBuilder().token("TOKEN").build()
 
 
-application.add_handler(CommandHandler('start', start))
+application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, resiveMessage))
 application.add_handler(MessageHandler(filters.CONTACT, resiveMessage))
 application.add_handler(CallbackQueryHandler(courseSelection))

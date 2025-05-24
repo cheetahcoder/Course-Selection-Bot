@@ -153,85 +153,6 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(message, reply_markup = reply)
 
             
-            elif message == "📈 گزارش انتخاب دروس":
-                message = "📊 گزارش انتخاب دروس:"
-                for k,v in courses.items():
-                    message += ("\n\n🔹 درس: " + k)
-                    message += ("\n   📋 تعداد انتخاب‌ها: " + str(len(v)))
-                    message += "\n  🧑‍🎓 انتخاب‌شده توسط:\n"
-                    for i in v:
-                        message += ("     🔸 " + Users.checkUser(i)["name"] + " (کد: " + Users.checkUser(i)["studentID"] + ")\n")
-                buttons = [["📊 نمودار دروس", "📂 اکسل گزارش انتخاب دروس"], ["↩️ بازگشت"]]
-                reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
-                await update.message.reply_text(message, reply_markup=reply)                
-
-
-            elif message == "📊 نمودار دروس":
-
-                for k,v in courses.items():
-                    chartDatax = []
-                    chartDatay = []
-
-                    for i in v:
-                        
-                        if not(Users.checkUser(i)["studentID"][:4] in chartDatax):
-                            chartDatax.append(Users.checkUser(i)["studentID"][:4])
-                            chartDatay.append(1)
-                        else:
-                            indexData = chartDatax.index(Users.checkUser(i)["studentID"][:4])
-                            chartDatay[indexData] += 1
-
-                    colors = makeColor(len(chartDatax))
-                    plt.bar(chartDatax, chartDatay, color=colors)
-                    plt.title(fixPersianText(k))
-                    plt.xlabel(fixPersianText("سال ورود"))
-                    plt.ylabel(fixPersianText("تعداد دانشجو"))
-                    plt.savefig(k + ".jpg")
-                    plt.close()
-
-
-                    f = open(k + ".jpg", "rb")
-                    await update.message.reply_photo(photo=f)
-                    f.close()
-
-                    os.remove(k + ".jpg")
-
-            elif message == "📂 اکسل گزارش انتخاب دروس":
-                dataFile = open("stats_report.csv", "w", encoding="utf-8-sig", newline="")
-                writer = csv.writer(dataFile)
-                writer.writerow(["Course Name", "Students Count"])
-
-                for k, v in courses.items():
-                    writer.writerow([k, len(v)])
-
-                dataFile.close()
-
-                f = open("stats_report.csv", "rb")
-                await update.message.reply_document(document=f, filename="stats_report.csv")
-                f.close()
-
-               
-                os.remove("stats_report.csv")
-
-
-                dataFile = open ("selection_report.csv", "w", encoding="utf-8-sig", newline="")
-                writer = csv.writer(dataFile)
-                writer.writerow(["Course Name", "Student Name", "Student ID"])
-                for course, users in courses.items():
-                    if not users:
-                        writer.writerow([course, "", ""])
-                    else:
-                        for i in users:
-                            user = Users.checkUser(i)
-                            writer.writerow([course, user["name"], user["studentID"]])
-
-                dataFile.close()
-
-                f = open("selection_report.csv", "rb")
-                await update.message.reply_document(document=f, filename="selection_report.csv")
-                f.close()
-
-                os.remove("selection_report.csv")
 
             elif message == "↩️ بازگشت":
 
@@ -246,61 +167,14 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 context.user_data["addcode"] = False
                 context.user_data["add"] = False
-
-            elif message == "🧑‍🎓 لیست کاربران":
-                message = "🧑‍🎓 لیست کاربران:\n\n"
-                counter = 0
-                for i in usersData:
-                    counter += 1
-                    message += ("\n🔹 " + str(counter) + ". نام: " + i["name"] + " | " + " کد دانشجویی: " + i["studentID"] + " | " + " تلفن: " + i["number"])
-
-                await update.message.reply_text(message) 
-            
-            elif message == "📖 لیست دروس":
-                message = "📖 لیست دروس:\n"
-                counter = 0
-                for k,v in courses.items():
-                    counter += 1
-                    message += ("\n🔸 " + str(counter) + ". " + k)
-
-                await update.message.reply_text(message) 
-
-            elif message == "➕ افزودن درس":
-                message = "لطفا نام درس را وارد کنید:"
-                context.user_data["add"] = True
-                button =  [["↩️ بازگشت"]]
-                reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
-                await update.message.reply_text(message, reply_markup=reply)
+                
 
             elif message == "➕ درخواست درس جدید":
-                message = "لطفا کد درس درخواستی خود را وارد کنید:"
-                context.user_data["addcode"] = True
-                button =  [["↩️ بازگشت"]]
-                reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
-                await update.message.reply_text(message, reply_markup=reply)
-
-            elif message == "📝 گزارش درخواست دروس":
-                message = "📝 گزارش درخواست دروس:"
-                for k,v in suggestCourse.items():
-                    message += ("\n\n🔹 کد درس: " + k)
-                    message += ("\n   📋 تعداد انتخاب‌ها: " + str(len(v)))
-                
-                await update.message.reply_text(message)   
-
-            elif context.user_data.get("add") :
-                context.user_data["add"] = False
-                courses[message] = []
-                saveLastData()
-
-                if userID in admins:
-                    buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
-                    reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
-                else:
-                    buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
-                    reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
-
-                await update.message.reply_text(f"درس '{message}' با موفقیت اضافه شد.",reply_markup=reply)
-                
+                    message = "لطفا کد درس درخواستی خود را وارد کنید:"
+                    context.user_data["addcode"] = True
+                    button =  [["↩️ بازگشت"]]
+                    reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
+                    await update.message.reply_text(message, reply_markup=reply)
 
             elif context.user_data.get("addcode") == True:
                 if len(message) == 5 and message.isdigit():
@@ -327,6 +201,136 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("✅ درخواست شما با موفقیت ثبت شد!", reply_markup=reply)
                 else:
                     await update.message.reply_text("❌ کد وارد شده نادرست است.\nلطفا یک کد 5 رقمی معتبر وارد کنید:")
+            
+            
+            if userID in admins:
+                if message == "📈 گزارش انتخاب دروس":
+                    message = "📊 گزارش انتخاب دروس:"
+                    for k,v in courses.items():
+                        message += ("\n\n🔹 درس: " + k)
+                        message += ("\n   📋 تعداد انتخاب‌ها: " + str(len(v)))
+                        message += "\n  🧑‍🎓 انتخاب‌شده توسط:\n"
+                        for i in v:
+                            message += ("     🔸 " + Users.checkUser(i)["name"] + " (کد: " + Users.checkUser(i)["studentID"] + ")\n")
+                    buttons = [["📊 نمودار دروس", "📂 اکسل گزارش انتخاب دروس"], ["↩️ بازگشت"]]
+                    reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+                    await update.message.reply_text(message, reply_markup=reply)                
+
+
+                elif message == "📊 نمودار دروس":
+
+                    for k,v in courses.items():
+                        chartDatax = []
+                        chartDatay = []
+
+                        for i in v:
+                            
+                            if not(Users.checkUser(i)["studentID"][:4] in chartDatax):
+                                chartDatax.append(Users.checkUser(i)["studentID"][:4])
+                                chartDatay.append(1)
+                            else:
+                                indexData = chartDatax.index(Users.checkUser(i)["studentID"][:4])
+                                chartDatay[indexData] += 1
+
+                        colors = makeColor(len(chartDatax))
+                        plt.bar(chartDatax, chartDatay, color=colors)
+                        plt.title(fixPersianText(k))
+                        plt.xlabel(fixPersianText("سال ورود"))
+                        plt.ylabel(fixPersianText("تعداد دانشجو"))
+                        plt.savefig(k + ".jpg")
+                        plt.close()
+
+
+                        f = open(k + ".jpg", "rb")
+                        await update.message.reply_photo(photo=f)
+                        f.close()
+
+                        os.remove(k + ".jpg")
+
+                elif message == "📂 اکسل گزارش انتخاب دروس":
+                    dataFile = open("stats_report.csv", "w", encoding="utf-8-sig", newline="")
+                    writer = csv.writer(dataFile)
+                    writer.writerow(["Course Name", "Students Count"])
+
+                    for k, v in courses.items():
+                        writer.writerow([k, len(v)])
+
+                    dataFile.close()
+
+                    f = open("stats_report.csv", "rb")
+                    await update.message.reply_document(document=f, filename="stats_report.csv")
+                    f.close()
+
+                
+                    os.remove("stats_report.csv")
+
+
+                    dataFile = open ("selection_report.csv", "w", encoding="utf-8-sig", newline="")
+                    writer = csv.writer(dataFile)
+                    writer.writerow(["Course Name", "Student Name", "Student ID"])
+                    for course, users in courses.items():
+                        if not users:
+                            writer.writerow([course, "", ""])
+                        else:
+                            for i in users:
+                                user = Users.checkUser(i)
+                                writer.writerow([course, user["name"], user["studentID"]])
+
+                    dataFile.close()
+
+                    f = open("selection_report.csv", "rb")
+                    await update.message.reply_document(document=f, filename="selection_report.csv")
+                    f.close()
+
+                    os.remove("selection_report.csv")
+                
+                elif message == "🧑‍🎓 لیست کاربران":
+                    message = "🧑‍🎓 لیست کاربران:\n"
+                    counter = 0
+                    for i in usersData:
+                        counter += 1
+                        message += ("\n🔹 " + str(counter) + ". نام: " + i["name"] + " | " + " کد دانشجویی: " + i["studentID"] + " | " + " تلفن: " + i["number"])
+
+                    await update.message.reply_text(message) 
+                
+                elif message == "📖 لیست دروس":
+                    message = "📖 لیست دروس:\n"
+                    counter = 0
+                    for k,v in courses.items():
+                        counter += 1
+                        message += ("\n🔸 " + str(counter) + ". " + k)
+
+                    await update.message.reply_text(message) 
+
+                elif message == "➕ افزودن درس":
+                    message = "لطفا نام درس را وارد کنید:"
+                    context.user_data["add"] = True
+                    button =  [["↩️ بازگشت"]]
+                    reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
+                    await update.message.reply_text(message, reply_markup=reply)
+
+
+                elif message == "📝 گزارش درخواست دروس":
+                    message = "📝 گزارش درخواست دروس:"
+                    for k,v in suggestCourse.items():
+                        message += ("\n\n🔹 کد درس: " + k)
+                        message += ("\n   📋 تعداد انتخاب‌ها: " + str(len(v)))
+                    
+                    await update.message.reply_text(message)   
+
+                elif context.user_data.get("add") :
+                    context.user_data["add"] = False
+                    courses[message] = []
+                    saveLastData()
+
+                    if userID in admins:
+                        buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
+                        reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+                    else:
+                        buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
+                        reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
+
+                    await update.message.reply_text(f"درس '{message}' با موفقیت اضافه شد.",reply_markup=reply)
 
 
 

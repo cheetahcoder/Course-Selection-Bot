@@ -24,6 +24,11 @@ dataFile = open ("Courses.json", "r", encoding="utf-8")
 courses = json.load(dataFile)
 dataFile.close()
 
+suggestCourse = {}
+dataFile = open ("Suggested_Courses.json", "r", encoding="utf-8")
+suggestCourse = json.load(dataFile)
+dataFile.close()
+
 
 def fixPersianText(text):
     reshapedText = arabic_reshaper.reshape(text)
@@ -43,6 +48,10 @@ def saveLastData():
 
     dataFile = open ("Courses.json", "w")
     dataFile.write(json.dumps(courses))
+    dataFile.close()
+
+    dataFile = open ("Suggested_Courses.json", "w")
+    dataFile.write(json.dumps(suggestCourse))
     dataFile.close()
 
     
@@ -75,15 +84,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     resultCheck = Users.checkUser(userID)
     if resultCheck:
         if userID in admins:
-            buttons = [[KeyboardButton("📚 انتخاب واحد")],[KeyboardButton("📊 گزارش انتخاب دروس"), KeyboardButton("🧑‍🎓 لیست کاربران")],[KeyboardButton("📖 لیست دروس"), KeyboardButton("➕ افزودن درس")], [KeyboardButton("📂 اکسل گزارش انتخاب دروس")]]
+            buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
             reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
             await update.message.reply_text("منوی دسترسی:", reply_markup=reply)
         else:
-            button = KeyboardButton("📚 انتخاب واحد")
-            reply = ReplyKeyboardMarkup([[button]], resize_keyboard=True)
-            await update.message.reply_text(f"👋 سلام {resultCheck["name"]} عزیز!\n🎯 لطفاً گزینه مورد نظر خود را از منوی زیر انتخاب کنید.", reply_markup=reply)
+            buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
+            reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
+            await update.message.reply_text(f"👋 سلام {resultCheck['name']} عزیز!\n🎯 لطفا گزینه مورد نظر خود را از منوی زیر انتخاب کنید.", reply_markup=reply)
     else:
-        await update.message.reply_text(f"👋 سلام {firstName} عزیز!\n🌟 برای ثبت‌نام، لطفاً نام خانوادگی خود را ارسال کنید:")
+        await update.message.reply_text(f"👋 سلام {firstName} عزیز!\n🌟 برای ثبت‌نام، لطفا نام خانوادگی خود را ارسال کنید:")
         context.user_data["level"] = 1
 
 async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -95,7 +104,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if message:
                 context.user_data["name"] = message
                 context.user_data["level"] = 2
-                await update.message.reply_text("لطفاً کد دانشجویی خود را ارسال کنید.")
+                await update.message.reply_text("لطفا کد دانشجویی خود را ارسال کنید.")
             else:
                 await update.message.reply_text("Lotfan Name Khod Ra Vared Konid!")
         elif context.user_data["level"] == 2 :
@@ -104,23 +113,18 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 context.user_data["level"] = 3
                 shareButton = KeyboardButton("Share Contact", request_contact=True)
                 reply = ReplyKeyboardMarkup([[shareButton]], resize_keyboard=True)
-                await update.message.reply_text("لطفاً شماره همراه خود را ارسال کنید.", reply_markup=reply)
+                await update.message.reply_text("لطفا شماره همراه خود را ارسال کنید.", reply_markup=reply)
             else:
-                await update.message.reply_text("کد دانشجویی باید حتماً 9 رقم باشد. لطفاً مجدداً وارد کنید.") 
+                await update.message.reply_text("کد دانشجویی باید حتما 9 رقم باشد. لطفا مجددا وارد کنید.") 
         elif context.user_data["level"] == 3 :
             contact = update.message.contact
             if contact:
                 Users.registerUser(userID, context.user_data["name"], context.user_data["studentId"], contact.phone_number)
                 
-                button = KeyboardButton("📚 انتخاب واحد")
-                reply = ReplyKeyboardMarkup([[button]], resize_keyboard=True)
-                await update.message.reply_text("سلام کاربر عزیز! لطفاً گزینه مورد نظر را انتخاب کنید.", reply_markup=reply) 
+                buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
+                reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
+                await update.message.reply_text("سلام کاربر عزیز! لطفا گزینه مورد نظر را انتخاب کنید.", reply_markup=reply) 
                 context.user_data["level"] = 0
-    elif context.user_data.get("add") :
-        context.user_data["add"] = False
-        courses[message] = []
-        saveLastData()
-        await update.message.reply_text(f'درس "{message}" با موفقیت اضافه شد.')
         
     else:
         if Users.checkUser(userID):
@@ -149,7 +153,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(message, reply_markup = reply)
 
             
-            elif message == "📊 گزارش انتخاب دروس":
+            elif message == "📈 گزارش انتخاب دروس":
                 message = "📊 گزارش انتخاب دروس:"
                 for k,v in courses.items():
                     message += ("\n\n🔹 درس: " + k)
@@ -157,8 +161,12 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     message += "\n  🧑‍🎓 انتخاب‌شده توسط:\n"
                     for i in v:
                         message += ("     🔸 " + Users.checkUser(i)["name"] + " (کد: " + Users.checkUser(i)["studentID"] + ")\n")
+                buttons = [["📊 نمودار دروس", "📂 اکسل گزارش انتخاب دروس"], ["↩️ بازگشت"]]
+                reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+                await update.message.reply_text(message, reply_markup=reply)                
 
-                await update.message.reply_text(message)                
+
+            elif message == "📊 نمودار دروس":
 
                 for k,v in courses.items():
                     chartDatax = []
@@ -187,7 +195,6 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f.close()
 
                     os.remove(k + ".jpg")
-
 
             elif message == "📂 اکسل گزارش انتخاب دروس":
                 dataFile = open("stats_report.csv", "w", encoding="utf-8-sig", newline="")
@@ -226,6 +233,20 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 os.remove("selection_report.csv")
 
+            elif message == "↩️ بازگشت":
+
+                if userID in admins:
+                    buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
+                    reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+                    await update.message.reply_text("منوی دسترسی:", reply_markup=reply)
+                else:
+                    buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
+                    reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
+                    await update.message.reply_text("منوی دسترسی:", reply_markup=reply)
+
+                context.user_data["addcode"] = False
+                context.user_data["add"] = False
+
             elif message == "🧑‍🎓 لیست کاربران":
                 message = "🧑‍🎓 لیست کاربران:\n\n"
                 counter = 0
@@ -245,9 +266,70 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(message) 
 
             elif message == "➕ افزودن درس":
-                message = "لطفاً نام درس را وارد کنید:"
+                message = "لطفا نام درس را وارد کنید:"
                 context.user_data["add"] = True
-                await update.message.reply_text(message)
+                button =  [["↩️ بازگشت"]]
+                reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
+                await update.message.reply_text(message, reply_markup=reply)
+
+            elif message == "➕ درخواست درس جدید":
+                message = "لطفا کد درس درخواستی خود را وارد کنید:"
+                context.user_data["addcode"] = True
+                button =  [["↩️ بازگشت"]]
+                reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
+                await update.message.reply_text(message, reply_markup=reply)
+
+            elif message == "📝 گزارش درخواست دروس":
+                message = "📝 گزارش درخواست دروس:"
+                for k,v in suggestCourse.items():
+                    message += ("\n\n🔹 کد درس: " + k)
+                    message += ("\n   📋 تعداد انتخاب‌ها: " + str(len(v)))
+                
+                await update.message.reply_text(message)   
+
+            elif context.user_data.get("add") :
+                context.user_data["add"] = False
+                courses[message] = []
+                saveLastData()
+
+                if userID in admins:
+                    buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
+                    reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+                else:
+                    buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
+                    reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
+
+                await update.message.reply_text(f"درس '{message}' با موفقیت اضافه شد.",reply_markup=reply)
+                
+
+            elif context.user_data.get("addcode") == True:
+                if len(message) == 5 and message.isdigit():
+
+                    if userID in admins:
+                        buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
+                        reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+                    else:
+                        buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
+                        reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
+
+                    if suggestCourse.get(message) is None:
+                        suggestCourse[message] = [userID]
+                    else:
+                        if not(userID in suggestCourse[message]):
+                            suggestCourse[message].append(userID)
+                        else:
+                            await update.message.reply_text("❌ شما قبلا برای این درس درخواست داده اید.", reply_markup=reply)
+                            context.user_data["addcode"] = False
+                            return
+
+                    saveLastData()
+                    context.user_data["addcode"] = False
+                    await update.message.reply_text("✅ درخواست شما با موفقیت ثبت شد!", reply_markup=reply)
+                else:
+                    await update.message.reply_text("❌ کد وارد شده نادرست است.\nلطفا یک کد 5 رقمی معتبر وارد کنید:")
+
+
+
                 
 
 async def courseSelection(update: Update, context: CallbackContext):

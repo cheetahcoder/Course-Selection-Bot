@@ -64,6 +64,12 @@ class Users():
                 return users
         return False
     
+    def checkExistUser(studentID):
+        for users in usersData:
+            if users["studentID"] == studentID:
+                return users
+        return False
+    
     def registerUser(ID, name, studentID, number):
         tempUser = {"ID" : ID, "name" : name, "studentID" : studentID, "number" : str(number)}
         usersData.append(tempUser)
@@ -92,7 +98,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
             await update.message.reply_text(f"👋 سلام {resultCheck['name']} عزیز!\n🎯 لطفا گزینه مورد نظر خود را از منوی زیر انتخاب کنید.", reply_markup=reply)
     else:
-        await update.message.reply_text(f"👋 سلام {firstName} عزیز!\n🌟 برای ثبت‌نام، لطفا نام خانوادگی خود را ارسال کنید:")
+        await update.message.reply_text(f"👋 سلام {firstName} عزیز!\n🌟 برای ثبت‌نام، لطفا نام و نام خانوادگی خود را ارسال کنید:")
         context.user_data["level"] = 1
 
 async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -104,18 +110,21 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if message:
                 context.user_data["name"] = message
                 context.user_data["level"] = 2
-                await update.message.reply_text("لطفا کد دانشجویی خود را ارسال کنید.")
+                await update.message.reply_text("لطفاً کد دانشجویی خود را وارد کنید 📌")
             else:
-                await update.message.reply_text("Lotfan Name Khod Ra Vared Konid!")
+                await update.message.reply_text("لطفاً نام خود را ارسال کنید 📌")
         elif context.user_data["level"] == 2 :
             if len(message) == 9 and message.isdigit():
-                context.user_data["studentId"] = message
-                context.user_data["level"] = 3
-                shareButton = KeyboardButton("Share Contact", request_contact=True)
-                reply = ReplyKeyboardMarkup([[shareButton]], resize_keyboard=True)
-                await update.message.reply_text("لطفا شماره همراه خود را ارسال کنید.", reply_markup=reply)
+                if not(Users.checkExistUser(message)):
+                    context.user_data["studentId"] = message
+                    context.user_data["level"] = 3
+                    shareButton = KeyboardButton("Share Contact", request_contact=True)
+                    reply = ReplyKeyboardMarkup([[shareButton]], resize_keyboard=True)
+                    await update.message.reply_text("لطفاً شماره موبایل خود را وارد کنید 📱", reply_markup=reply)
+                else:
+                    await update.message.reply_text("⚠️ کد دانشجویی شما قبلاً ثبت شده است.\nدر صورت نیاز به کمک، با پشتیبانی تماس بگیرید.")
             else:
-                await update.message.reply_text("کد دانشجویی باید حتما 9 رقم باشد. لطفا مجددا وارد کنید.") 
+                await update.message.reply_text("🔢 کد دانشجویی باید 9 رقم باشد!\nلطفاً مجدداً آن را وارد کنید.") 
         elif context.user_data["level"] == 3 :
             contact = update.message.contact
             if contact:
@@ -123,7 +132,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
                 buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
                 reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
-                await update.message.reply_text("سلام کاربر عزیز! لطفا گزینه مورد نظر را انتخاب کنید.", reply_markup=reply) 
+                await update.message.reply_text(f"سلام {context.user_data["name"]} عزیز! لطفا گزینه مورد نظر را انتخاب کنید.", reply_markup=reply) 
                 context.user_data["level"] = 0
         
     else:
@@ -382,5 +391,3 @@ application.add_handler(CallbackQueryHandler(courseSelection))
 
 
 application.run_polling()
-
-

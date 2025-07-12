@@ -90,7 +90,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     resultCheck = Users.checkUser(userID)
     if resultCheck:
         if userID in admins:
-            buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
+            buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"], ["🔑 پنل مدیریت"]]
             reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
             await update.message.reply_text("منوی دسترسی:", reply_markup=reply)
         else:
@@ -166,7 +166,10 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
             elif message == "↩️ بازگشت":
 
                 if userID in admins:
-                    buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
+                    if context.user_data.get("addcode"):
+                        buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"], ["🔑 پنل مدیریت"]]
+                    else:
+                        buttons = [["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "❌ حذف درس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"], ["↩️ بازگشت به منوی کاربری"]]
                     reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
                     await update.message.reply_text("منوی دسترسی:", reply_markup=reply)
                 else:
@@ -176,20 +179,35 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 context.user_data["addcode"] = False
                 context.user_data["add"] = False
+                context.user_data["remove"] = False
+            
+            elif message == "🔑 پنل مدیریت":
+
+                if userID in admins:
+                    buttons = [["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "❌ حذف درس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"], ["↩️ بازگشت به منوی کاربری"]]
+                    reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+                    await update.message.reply_text("منوی دسترسی:", reply_markup=reply)
+
+            elif message == "↩️ بازگشت به منوی کاربری":
+
+                if userID in admins:
+                    buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"], ["🔑 پنل مدیریت"]]
+                    reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+                    await update.message.reply_text("منوی دسترسی:", reply_markup=reply)
                 
 
             elif message == "➕ درخواست درس جدید":
-                    message = "لطفا کد درس درخواستی خود را وارد کنید:"
-                    context.user_data["addcode"] = True
-                    button =  [["↩️ بازگشت"]]
-                    reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
-                    await update.message.reply_text(message, reply_markup=reply)
+                message = "لطفا کد درس درخواستی خود را وارد کنید:"
+                context.user_data["addcode"] = True
+                button =  [["↩️ بازگشت"]]
+                reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
+                await update.message.reply_text(message, reply_markup=reply)
 
             elif context.user_data.get("addcode") == True:
                 if len(message) == 5 and message.isdigit():
 
                     if userID in admins:
-                        buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
+                        buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"], ["🔑 پنل مدیریت"]]
                         reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
                     else:
                         buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
@@ -224,6 +242,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     buttons = [["📊 نمودار دروس", "📂 اکسل گزارش انتخاب دروس"], ["↩️ بازگشت"]]
                     reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
                     await update.message.reply_text(message, reply_markup=reply)                
+
 
 
                 elif message == "📊 نمودار دروس":
@@ -318,6 +337,12 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
                     await update.message.reply_text(message, reply_markup=reply)
 
+                elif message == "❌ حذف درس":
+                    message = "لطفا نام درس را وارد کنید:"
+                    context.user_data["remove"] = True
+                    button =  [["↩️ بازگشت"]]
+                    reply = ReplyKeyboardMarkup(button, resize_keyboard=True)
+                    await update.message.reply_text(message, reply_markup=reply)
 
                 elif message == "📝 گزارش درخواست دروس":
                     message = "📝 گزارش درخواست دروس:"
@@ -332,14 +357,23 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     courses[message] = []
                     saveLastData()
 
-                    if userID in admins:
-                        buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"],["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"]]
-                        reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
-                    else:
-                        buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
-                        reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
+                    buttons = [["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "❌ حذف درس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"], ["↩️ بازگشت به منوی کاربری"]]
+                    reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
 
                     await update.message.reply_text(f"درس '{message}' با موفقیت اضافه شد.",reply_markup=reply)
+
+                elif context.user_data.get("remove") :
+                    if message in courses:
+                        context.user_data["remove"] = False
+                        courses.pop(message)
+                        saveLastData()
+
+                        buttons = [["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "❌ حذف درس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"], ["↩️ بازگشت به منوی کاربری"]]
+                        reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
+
+                        await update.message.reply_text(f"درس '{message}' با موفقیت حذف شد.",reply_markup=reply)
+                    else:
+                        await update.message.reply_text("❌ نام وارد شده نادرست است.\nلطفا یک نام درس معتبر وارد کنید:")
 
 
 

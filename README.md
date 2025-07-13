@@ -36,17 +36,25 @@
 ### ⚙️ راه‌اندازی و نصب
 
 ۱.  ابتدا پروژه را از مخزن (repository) کلون کنید:
-    ```bash
-    git clone <URL_REPOSITORY>
-    cd <DIRECTORY_NAME>
-    ```
+<div dir="ltr">
 
-2.  بسته‌های مورد نیاز پایتون را نصب کنید. :
-    ```bash
-    pip install python-telegram-bot mysql-connector-python matplotlib arabic_reshaper python-bidi
-    ```
+```bash
+git clone <URL_REPOSITORY>
+cd <DIRECTORY_NAME>
+```
 
-3.  **پیکربندی پایگاه داده:**
+</div>
+
+۲.  بسته‌های مورد نیاز پایتون را نصب کنید:
+<div dir="ltr">
+
+```bash
+pip install python-telegram-bot mysql-connector-python matplotlib arabic_reshaper python-bidi
+```
+
+</div>
+
+۳.  **پیکربندی پایگاه داده:**
     -   **MySQL (حالت پیش‌فرض):**
         -   یک پایگاه داده با نام `telegrambot` بسازید.
         -   فایل `telegrambot.sql` را در این پایگاه داده import کنید تا جداول مورد نیاز ساخته شوند.
@@ -54,16 +62,25 @@
     -   **JSON:**
         -   در فایل `manageDatabase.py`، متغیر `DATABASE_TYPE` را به `"json"` تغییر دهید.
 
-4.  **توکن ربات:**
+۴.  **توکن ربات:**
     -   توکن ربات تلگرام خود را که از **BotFather** دریافت کرده‌اید، در فایل `main.py` و در خط زیر جایگزین `"TOKEN"` کنید:
-        ```python
-        application = ApplicationBuilder().token("TOKEN").build()
-        ```
+<div dir="ltr">
 
-5.  **اجرای ربات:**
-    ```bash
-    python main.py
-    ```
+```python
+application = ApplicationBuilder().token("TOKEN").build()
+```
+
+</div>
+
+۵.  **اجرای ربات:**
+<div dir="ltr">
+
+```bash
+python main.py
+```
+
+</div>
+
 ---
 
 ### 🗄 ساختار پایگاه داده (`telegrambot.sql`)

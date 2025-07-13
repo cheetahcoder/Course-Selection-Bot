@@ -1,6 +1,6 @@
 from telegram import Update, KeyboardButton,ReplyKeyboardRemove, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, CallbackQueryHandler, CallbackContext
-import json
+import manageDatabase
 import csv
 import os
 import matplotlib.pyplot as plt
@@ -9,26 +9,11 @@ import arabic_reshaper
 import random
 
 
-usersData = []
-dataFile = open ("User_Data.json", "r", encoding="utf-8")
-usersData = json.load(dataFile)
-dataFile.close()
-
-admins = []
-dataFile = open ("Admin.json", "r")
-admins = json.load(dataFile)
-dataFile.close()
-
-courses = {}
-dataFile = open ("Courses.json", "r", encoding="utf-8")
-courses = json.load(dataFile)
-dataFile.close()
-
-suggestCourse = {}
-dataFile = open ("Suggested_Courses.json", "r", encoding="utf-8")
-suggestCourse = json.load(dataFile)
-dataFile.close()
-
+data = manageDatabase.loadData()
+usersData = data["usersData"]
+admins = data["admins"]
+courses = data["courses"]
+suggestCourse = data["suggestCourse"]
 
 def fixPersianText(text):
     reshapedText = arabic_reshaper.reshape(text)
@@ -40,21 +25,6 @@ def makeColor(x):
         color = (random.random(), random.random(), random.random())
         colors.append(color)
     return colors
-
-def saveLastData():
-    dataFile = open ("User_Data.json", "w")
-    dataFile.write(json.dumps(usersData))
-    dataFile.close()
-
-    dataFile = open ("Courses.json", "w")
-    dataFile.write(json.dumps(courses))
-    dataFile.close()
-
-    dataFile = open ("Suggested_Courses.json", "w")
-    dataFile.write(json.dumps(suggestCourse))
-    dataFile.close()
-
-    
 
 
 class Users():
@@ -73,7 +43,7 @@ class Users():
     def registerUser(ID, name, studentID, number):
         tempUser = {"ID" : ID, "name" : name, "studentID" : studentID, "number" : str(number)}
         usersData.append(tempUser)
-        saveLastData()
+        manageDatabase.saveLastData(usersData, courses, suggestCourse)
         
 
 
@@ -223,7 +193,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             context.user_data["addcode"] = False
                             return
 
-                    saveLastData()
+                    manageDatabase.saveLastData(usersData, courses, suggestCourse)
                     context.user_data["addcode"] = False
                     await update.message.reply_text("✅ درخواست شما با موفقیت ثبت شد!", reply_markup=reply)
                 else:
@@ -355,7 +325,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 elif context.user_data.get("add") :
                     context.user_data["add"] = False
                     courses[message] = []
-                    saveLastData()
+                    manageDatabase.saveLastData(usersData, courses, suggestCourse)
 
                     buttons = [["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "❌ حذف درس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"], ["↩️ بازگشت به منوی کاربری"]]
                     reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
@@ -366,7 +336,7 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     if message in courses:
                         context.user_data["remove"] = False
                         courses.pop(message)
-                        saveLastData()
+                        manageDatabase.saveLastData(usersData, courses, suggestCourse)
 
                         buttons = [["📈 گزارش انتخاب دروس", "🧑‍🎓 لیست کاربران"],["📖 لیست دروس", "❌ حذف درس", "➕ افزودن درس"], ["📝 گزارش درخواست دروس"], ["↩️ بازگشت به منوی کاربری"]]
                         reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
@@ -387,7 +357,7 @@ async def courseSelection(update: Update, context: CallbackContext):
     else:
         courses[courseName].append(userID)
 
-    saveLastData()
+    manageDatabase.saveLastData(usersData, courses, suggestCourse)
 
     message = "📚 دروس موجود برای انتخاب:\n\n"
     counter = 0

@@ -1,7 +1,8 @@
-DATABASE_TYPE = "mysql"
-
 import json
 import copy
+
+DATABASE_TYPE = "mysql"
+ADMINS = []
 
 if DATABASE_TYPE == "mysql":
     import mysql.connector
@@ -22,9 +23,7 @@ def loadData():
         data["usersData"] = json.load(dataFile)
         dataFile.close()
 
-        dataFile = open ("./jsonDB/Admin.json", "r")
-        data["admins"] = json.load(dataFile)
-        dataFile.close()
+        data["admins"] = ADMINS
 
         dataFile = open ("./jsonDB/Courses.json", "r", encoding="utf-8")
         data["courses"] = json.load(dataFile)
@@ -45,10 +44,7 @@ def loadData():
         for i in result:
             data["usersData"].append({"ID" : i[1], "name" : i[2], "studentID" : i[3], "number" : i[4]})    
         
-        mycursor.execute("SELECT * FROM admins")
-        result = mycursor.fetchall()
-        for i in result:
-            data["admins"].append(i[1])    
+        data["admins"] = ADMINS   
         
         mycursor.execute("SELECT * FROM courses")
         result = mycursor.fetchall()
@@ -87,10 +83,11 @@ def saveLastData(usersData, courses, suggestCourse):
         dataFile.close()
 
     elif DATABASE_TYPE == "mysql":
-        if not(usersData[-1] == data["usersData"][-1]):
+        if len(usersData) > len(data["usersData"]):
             mycursor = mydb.cursor()
+            newUser = usersData[-1]
             sql = "INSERT INTO users_data (telegramID, name, studentID, number) VALUES (%s, %s, %s, %s)"
-            val = tuple(usersData[-1].values())
+            val = (newUser["ID"], newUser["name"], newUser["studentID"], newUser["number"])
             mycursor.execute(sql, val)
             mydb.commit()
 

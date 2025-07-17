@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 13, 2025 at 12:57 PM
+-- Generation Time: Jul 17, 2025 at 11:03 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -20,17 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `telegrambot`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `admins`
---
-
-CREATE TABLE `admins` (
-  `id` int(11) NOT NULL,
-  `telegramID` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_persian_ci;
 
 -- --------------------------------------------------------
 
@@ -86,12 +75,6 @@ CREATE TABLE `users_data` (
 --
 
 --
--- Indexes for table `admins`
---
-ALTER TABLE `admins`
-  ADD PRIMARY KEY (`id`);
-
---
 -- Indexes for table `courses`
 --
 ALTER TABLE `courses`
@@ -119,12 +102,6 @@ ALTER TABLE `users_data`
 --
 -- AUTO_INCREMENT for dumped tables
 --
-
---
--- AUTO_INCREMENT for table `admins`
---
-ALTER TABLE `admins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `courses`

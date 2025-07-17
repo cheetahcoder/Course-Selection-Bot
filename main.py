@@ -69,7 +69,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"👋 سلام {firstName} عزیز!\n🌟 برای ثبت‌نام، لطفا نام و نام خانوادگی خود را ارسال کنید:", reply_markup=ReplyKeyboardRemove())
         context.user_data["level"] = 1
 
-async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def receiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     userID = update.message.from_user.id
     firstName = update.message.from_user.first_name
     message = update.message.text
@@ -98,9 +98,11 @@ async def resiveMessage(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if contact:
                 if contact.user_id == userID:
                     Users.registerUser(userID, context.user_data["name"], context.user_data["studentId"], contact.phone_number)
-                    
-                    buttons = ["📚 انتخاب واحد", "➕ درخواست درس جدید"]
-                    reply = ReplyKeyboardMarkup([buttons], resize_keyboard=True)
+                    if userID in admins:
+                        buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"], ["🔑 منوی مدیریت"]]
+                    else:
+                        buttons = [["📚 انتخاب واحد", "➕ درخواست درس جدید"]]
+                    reply = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
                     await update.message.reply_text(f"سلام {context.user_data['name']} عزیز! لطفا گزینه مورد نظر را انتخاب کنید.", reply_markup=reply) 
                     context.user_data["level"] = 0
                 else:
@@ -392,8 +394,8 @@ application = ApplicationBuilder().token("TOKEN").build()
 
 
 application.add_handler(CommandHandler("start", start))
-application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, resiveMessage))
-application.add_handler(MessageHandler(filters.CONTACT, resiveMessage))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, receiveMessage))
+application.add_handler(MessageHandler(filters.CONTACT, receiveMessage))
 application.add_handler(CallbackQueryHandler(courseSelection))
 
 

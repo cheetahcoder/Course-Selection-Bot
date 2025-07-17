@@ -74,15 +74,15 @@ def loadData():
 
 def saveLastData(usersData, courses, suggestCourse):
     if DATABASE_TYPE == "json":
-        dataFile = open ("User_Data.json", "w")
+        dataFile = open ("./jsonDB/User_Data.json", "w")
         dataFile.write(json.dumps(usersData))
         dataFile.close()
 
-        dataFile = open ("Courses.json", "w")
+        dataFile = open ("./jsonDB/Courses.json", "w")
         dataFile.write(json.dumps(courses))
         dataFile.close()
 
-        dataFile = open ("Suggested_Courses.json", "w")
+        dataFile = open ("./jsonDB/Suggested_Courses.json", "w")
         dataFile.write(json.dumps(suggestCourse))
         dataFile.close()
 
